@@ -3,21 +3,25 @@ class Restaurant < ApplicationRecord
 
   def self.all_restaurants
     data =  JSON.parse(DataFetch::Main.get_restaurants.to_json)['businesses']
-    return data.sort_by!{|key| key['review_count']}
+    result = data.sort_by!{|key| key['review_count']}
+    return self.custom_response(result)
   end
 
-  def as_json(options={})
-    {:restaurant_name => "name",
-      :methods => [:address],
-      :rating => 'avg_rating',
-      :count => 'review_count'}
-  end
-
-  def address
-    {:latitude => 'latitude',
-        :longitude => 'longitude',
-        :city => 'city',
-        :state => 'state',
-        :zipcode => 'zip'}
+  private
+  def self.custom_response(results)
+    data = []
+    results.each do |record|
+      data << {restaurant_name: record['name'],
+                  address: {
+                    latitude: record['latitude'],
+                    longitude: record['longitude'],
+                    city: record['city'],
+                    state: record['state'],
+                    zipcode: record['zip']
+                  },
+                  rating: record['avg_rating'],
+                  count: record['review_count']}
+    end
+    return data
   end
 end
